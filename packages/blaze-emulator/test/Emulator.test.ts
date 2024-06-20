@@ -89,10 +89,10 @@ describe("Emulator", () => {
           Credential.fromCore({
             type: CredentialType.ScriptHash,
             hash: alwaysTrueScript.hash(),
-          }),
+          })
         ),
         makeValue(1_000_000_000n),
-        ONE_PLUTUS_DATA,
+        ONE_PLUTUS_DATA
       )
       .complete();
     const txHash = await signAndSubmit(tx, blaze);
@@ -111,10 +111,10 @@ describe("Emulator", () => {
           Credential.fromCore({
             type: CredentialType.ScriptHash,
             hash: alwaysTrueScript.hash(),
-          }),
+          })
         ),
         makeValue(1_000_000_000n),
-        ONE_PLUTUS_DATA,
+        ONE_PLUTUS_DATA
       )
       .provideScript(alwaysTrueScript)
       .complete();
@@ -131,7 +131,7 @@ describe("Emulator", () => {
         DEPLOYMENT_ADDR,
         makeValue(1_000_000_000n),
         ONE_PLUTUS_DATA,
-        alwaysTrueScript,
+        alwaysTrueScript
       )
       .complete();
     const refTxHash = await signAndSubmit(refTx, blaze);
@@ -139,7 +139,7 @@ describe("Emulator", () => {
     const refIn = new TransactionInput(refTxHash, 0n);
     const refUtxo = new TransactionUnspentOutput(
       refIn,
-      emulator.getOutput(refIn)!,
+      emulator.getOutput(refIn)!
     );
 
     const tx = await (
@@ -151,10 +151,10 @@ describe("Emulator", () => {
           Credential.fromCore({
             type: CredentialType.ScriptHash,
             hash: alwaysTrueScript.hash(),
-          }),
+          })
         ),
         makeValue(1_000_000_000n),
-        ONE_PLUTUS_DATA,
+        ONE_PLUTUS_DATA
       )
       .complete();
 
@@ -182,7 +182,7 @@ describe("Emulator", () => {
       Credential.fromCore({
         type: CredentialType.ScriptHash,
         hash: alwaysTrueScript.hash(),
-      }),
+      })
     );
 
     const tx = await (await blaze.newTransaction())
@@ -190,7 +190,7 @@ describe("Emulator", () => {
         addr,
         makeValue(1_000_000_000n),
         ONE_PLUTUS_DATA,
-        alwaysTrueScript,
+        alwaysTrueScript
       )
       .complete();
 
@@ -250,4 +250,81 @@ describe("Emulator", () => {
     isDefined(out);
     expect(out.address()).toEqual(wallet1.address);
   });
+
+  test("Should be able to spend many from a script, mint, and withdraw", async () => {
+    const rewardAddr = RewardAddress.fromCredentials(NetworkId.Testnet, {
+      hash: alwaysTrueScript.hash(),
+      type: CredentialType.ScriptHash,
+    });
+    const rewardAccount = RewardAccount(rewardAddr.toAddress().toBech32());
+
+    emulator.accounts.set(rewardAccount, 10_000_000n);
+    const refTx = await (await blaze.newTransaction())
+      .lockAssets(
+        DEPLOYMENT_ADDR,
+        makeValue(1_000_000_000n),
+        ONE_PLUTUS_DATA,
+        alwaysTrueScript
+      )
+      .complete();
+    const refTxHash = await signAndSubmit(refTx, blaze);
+    emulator.awaitTransactionConfirmation(refTxHash);
+    const refIn = new TransactionInput(refTxHash, 0n);
+    const refUtxo = new TransactionUnspentOutput(
+      refIn,
+      emulator.getOutput(refIn)!
+    );
+
+    const tx = await blaze.newTransaction();
+    for (let _ = 0; _ < 30; _++) {
+      tx.lockAssets(
+        addressFromCredential(
+          NetworkId.Testnet,
+          Credential.fromCore({
+            type: CredentialType.ScriptHash,
+            hash: alwaysTrueScript.hash(),
+          })
+        ),
+        makeValue(1_000_000n),
+        ONE_PLUTUS_DATA
+      );
+    }
+    const complete = await tx.complete();
+    const txHash = await signAndSubmit(complete, blaze);
+    emulator.awaitTransactionConfirmation(txHash);
+
+    const spendTx = await blaze.newTransaction();
+
+    for (let i = 0n; i < 30n; i++) {
+      const inp = new TransactionInput(txHash, i);
+      const out = emulator.getOutput(inp);
+      isDefined(out);
+      isDefined(out.datum());
+      spendTx
+        .addInput(new TransactionUnspentOutput(inp, out), VOID_PLUTUS_DATA)
+        .lockAssets(
+          addressFromCredential(
+            NetworkId.Testnet,
+            Credential.fromCore({
+              type: CredentialType.ScriptHash,
+              hash: alwaysTrueScript.hash(),
+            })
+          ),
+          makeValue(1_000_000n),
+          ONE_PLUTUS_DATA
+        );
+    }
+
+    const spendComplete = await spendTx
+      .addMint(PolicyId(alwaysTrueScript.hash()), new Map([[AssetName("a"), 10n]]))
+      .addWithdrawal(rewardAccount, 10_000_000n, VOID_PLUTUS_DATA)
+      .addReferenceInput(refUtxo)
+      .complete();
+    const spendTxHash = await signAndSubmit(spendComplete, blaze);
+    emulator.awaitTransactionConfirmation(spendTxHash);
+    const out2 = emulator.getOutput(new TransactionInput(spendTxHash, 0n));
+    isDefined(out2);
+    expect(out2.address()).toEqual(wallet1.address);
+  });
 });
+
