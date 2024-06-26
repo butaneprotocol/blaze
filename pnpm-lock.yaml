@@ -175,6 +175,12 @@ importers:
       '@blaze-cardano/core':
         specifier: workspace:*
         version: link:../blaze-core
+      '@cardano-ogmios/schema':
+        specifier: ^6.4.0
+        version: 6.4.0
+      ws:
+        specifier: ^8.17.1
+        version: 8.17.1
     devDependencies:
       '@blaze-cardano/eslint-config':
         specifier: workspace:*
@@ -182,6 +188,9 @@ importers:
       '@blaze-cardano/tsconfig':
         specifier: workspace:*
         version: link:../blaze-tsconfig
+      '@types/ws':
+        specifier: ^8.5.10
+        version: 8.5.10
       eslint:
         specifier: ^8.57.0
         version: 8.57.0
@@ -723,6 +732,11 @@ packages:
 
   /@cardano-ogmios/schema@5.6.0:
     resolution: {integrity: sha512-JTlh/gOS5iM4b7CKc3dFRs2UC6fY+PeLiOv6fKxFSOSRMZ59sLgv+oGqjnzyVeZFUt6o683C9zFmBzh60l8KnA==}
+    engines: {node: '>=14'}
+    dev: false
+
+  /@cardano-ogmios/schema@6.4.0:
+    resolution: {integrity: sha512-l4qQJtdnyvkBadOuTR3B449txpc4W7gO/3aVYtI1IK1Num4FI2kNFfIj/zJ0V3a3JGg1jaFvN8A9SWPaNPqOSg==}
     engines: {node: '>=14'}
     dev: false
 
@@ -2251,6 +2265,12 @@ packages:
   /@types/unist@3.0.2:
     resolution: {integrity: sha512-dqId9J8K/vGi5Zr7oo212BGii5m3q5Hxlkwy3WpYuKPklmBEvsbMYYyLxAQpSffdLl/gdW0XUpKWFvYmyoWCoQ==}
     dev: false
+
+  /@types/ws@8.5.10:
+    resolution: {integrity: sha512-vmQSUcfalpIq0R9q7uTo2lXs6eGIpt9wtnLdMv9LVpIjCA/+ufZRozlVoVelIYixx1ugCBKDhn89vnsEGOCx9A==}
+    dependencies:
+      '@types/node': 20.14.8
+    dev: true
 
   /@types/yargs-parser@21.0.3:
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
@@ -8464,6 +8484,19 @@ packages:
     peerDependencies:
       bufferutil: ^4.0.1
       utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+    dev: false
+
+  /ws@8.17.1:
+    resolution: {integrity: sha512-6XQFvXTkbfUOZOKKILFG1PDK2NDQs4azKQl26T0YS5CxqWLgXajbPZ+h4gZekJyRqFU8pvnbAbbs/3TgRPy+GQ==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
     peerDependenciesMeta:
       bufferutil:
         optional: true
